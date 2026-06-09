@@ -3,7 +3,7 @@
  */
 
 // CONFIGURAÇÃO: Insira aqui a URL gerada após a implantação do Google Apps Script
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyUC-LZgPNZ5RFJL8IHwpJLKPePxtp4UJJM0UIDKKpHVDPpLTjRhY2E3TsbgwHGXZJ0_w/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxJwRugttvurqZkoO4aEz9s5xn6_rAf_jCsIA7jlomdSZtbCj-8VgVj8XtiYFWf5-eaLQ/exec';
 
 // Estado da Aplicação
 let instructors = [];
@@ -49,6 +49,7 @@ btnSync.addEventListener('click', async () => {
             mode: 'cors',
             redirect: 'follow'
         });
+        
         const result = await response.json();
         if (result.status === 'success') {
             alert(result.message);
@@ -58,7 +59,7 @@ btnSync.addEventListener('click', async () => {
         }
     } catch (error) {
         console.error('Erro no sync:', error);
-        alert('Erro de conexão. Verifique se o Web App está como "Qualquer pessoa" e se você está usando a URL da "Nova Versão" implantada.');
+        alert('Erro de conexão. Detalhes no console do navegador (F12).');
     } finally {
         btnSync.disabled = false;
         btnSync.textContent = 'Sincronizar CAVOK';
@@ -71,7 +72,6 @@ async function fetchData() {
 
     loadingEl.style.display = 'block';
     try {
-        // Fetch simples para evitar preflight (OPTIONS)
         const response = await fetch(`${WEB_APP_URL}?action=get_data`, {
             method: 'GET',
             mode: 'cors',
@@ -83,6 +83,8 @@ async function fetchData() {
         if (result.status === 'success') {
             instructors = result.data;
             renderDashboard();
+        } else {
+            console.error('Erro retornado pelo script:', result.message);
         }
     } catch (error) {
         console.error('Erro ao buscar dados:', error);
@@ -109,10 +111,10 @@ function renderDashboard() {
     instructorTableBody.innerHTML = '';
     instructors.forEach(ins => {
         const row = document.createElement('tr');
-        const badgeClass = ins.tipo.toLowerCase() === 'clt' ? 'badge-clt' : 'badge-eventual';
+        const badgeClass = ins.tipo && ins.tipo.toLowerCase() === 'clt' ? 'badge-clt' : 'badge-eventual';
         row.innerHTML = `
             <td><strong>${ins.nome}</strong></td>
-            <td><span class="badge ${badgeClass}">${ins.tipo}</span></td>
+            <td><span class="badge ${badgeClass}">${ins.tipo || 'N/A'}</span></td>
             <td>${ins.totalHoras}h</td>
         `;
         instructorTableBody.appendChild(row);
@@ -127,10 +129,12 @@ document.getElementById('form-instrutor').addEventListener('submit', async (e) =
         tipo: document.getElementById('tipo').value
     };
 
-    await sendData('add_instructor', data);
-    e.target.reset();
-    alert('Instrutor cadastrado com sucesso!');
-    fetchData();
+    const result = await sendData('add_instructor', data);
+    if (result && result.status === 'success') {
+        alert('Instrutor cadastrado com sucesso!');
+        e.target.reset();
+        fetchData();
+    }
 });
 
 async function sendData(action, data) {
@@ -140,10 +144,13 @@ async function sendData(action, data) {
     }
 
     try {
+        // Para POST no Apps Script, usamos fetch com modo 'no-cors' ou 
+        // mandamos os dados via URL parameters se for pequeno.
+        // Mas o padrão correto é POST com JSON stringified.
         const response = await fetch(WEB_APP_URL, {
             method: 'POST',
-            body: JSON.stringify({ action, data }),
-            mode: 'cors'
+            mode: 'cors',
+            body: JSON.stringify({ action, data })
         });
         
         return await response.json();
