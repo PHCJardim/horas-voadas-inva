@@ -3,7 +3,7 @@
  */
 
 // CONFIGURAÇÃO: Insira aqui a URL gerada após a implantação do Google Apps Script
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyLefOzd8A9JIxnHaMJeVdbUmtD13aBvQz5cVnk5N0-0WR8vFU0NeDatjALhCKb8vFW/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyUC-LZgPNZ5RFJL8IHwpJLKPePxtp4UJJM0UIDKKpHVDPpLTjRhY2E3TsbgwHGXZJ0_w/exec';
 
 // Estado da Aplicação
 let instructors = [];
@@ -40,55 +40,49 @@ navLinks.forEach(link => {
 // Sincronização CAVOK
 btnSync.addEventListener('click', async () => {
     const today = new Date().toISOString().split('T')[0];
-    
     btnSync.disabled = true;
-    const originalText = btnSync.textContent;
     btnSync.textContent = 'Sincronizando...';
     
     try {
-        console.log('Iniciando sincronização via:', `${WEB_APP_URL}?action=sync_cavok&date=${today}`);
-        const response = await fetch(`${WEB_APP_URL}?action=sync_cavok&date=${today}`);
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+        const response = await fetch(`${WEB_APP_URL}?action=sync_cavok&date=${today}`, {
+            method: 'GET',
+            mode: 'cors',
+            redirect: 'follow'
+        });
         const result = await response.json();
-        
         if (result.status === 'success') {
             alert(result.message);
             fetchData();
         } else {
-            alert('Erro na sincronização: ' + result.message);
+            alert('Erro: ' + result.message);
         }
     } catch (error) {
-        console.error('Erro ao sincronizar:', error);
-        alert('Erro ao conectar com o servidor. Verifique se o Web App está implantado como "Qualquer pessoa" e se a URL está correta.');
+        console.error('Erro no sync:', error);
+        alert('Erro de conexão. Verifique se o Web App está como "Qualquer pessoa" e se você está usando a URL da "Nova Versão" implantada.');
     } finally {
         btnSync.disabled = false;
-        btnSync.textContent = originalText;
+        btnSync.textContent = 'Sincronizar CAVOK';
     }
 });
 
 // Busca de Dados
 async function fetchData() {
-    if (!WEB_APP_URL || WEB_APP_URL.includes('SUA_URL')) {
-        console.warn('URL do Apps Script não configurada.');
-        return;
-    }
+    if (!WEB_APP_URL || WEB_APP_URL.includes('SUA_URL')) return;
 
     loadingEl.style.display = 'block';
     try {
-        console.log('Buscando dados de:', `${WEB_APP_URL}?action=get_data`);
-        const response = await fetch(`${WEB_APP_URL}?action=get_data`);
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        // Fetch simples para evitar preflight (OPTIONS)
+        const response = await fetch(`${WEB_APP_URL}?action=get_data`, {
+            method: 'GET',
+            mode: 'cors',
+            redirect: 'follow'
+        });
         
         const result = await response.json();
         
         if (result.status === 'success') {
             instructors = result.data;
             renderDashboard();
-        } else {
-            console.error('Erro no servidor:', result.message);
         }
     } catch (error) {
         console.error('Erro ao buscar dados:', error);
@@ -148,10 +142,9 @@ async function sendData(action, data) {
     try {
         const response = await fetch(WEB_APP_URL, {
             method: 'POST',
-            body: JSON.stringify({ action, data })
+            body: JSON.stringify({ action, data }),
+            mode: 'cors'
         });
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         return await response.json();
     } catch (error) {
