@@ -3,16 +3,16 @@
  */
 
 // CONFIGURAÇÃO: Insira aqui a URL gerada após a implantação do Google Apps Script
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwQknV9JC0iOxacxFbdQ570S2npbvaiUKAfcBVY04Hm1gJjP4LHsNzdtNb-zi-W058Pmg/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyUC-LZgPNZ5RFJL8IHwpJLKPePxtp4UJJM0UIDKKpHVDPpLTjRhY2E3TsbgwHGXZJ0_w/exec';
 
 // Estado da Aplicação
 let instructors = [];
+let hoursChart = null;
 
 // Elementos do DOM
 const navLinks = document.querySelectorAll('.nav-link');
 const views = document.querySelectorAll('.view');
 const loadingEl = document.getElementById('loading');
-const instructorCardsEl = document.getElementById('instructor-cards');
 const instructorTableBody = document.querySelector('#instructor-table tbody');
 const btnSync = document.getElementById('btn-sync');
 
@@ -94,17 +94,65 @@ async function fetchData() {
 }
 
 function renderDashboard() {
-    // Renderizar Cards
-    instructorCardsEl.innerHTML = '';
-    instructors.forEach(ins => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-            <h3>${ins.nome}</h3>
-            <p>${ins.tipo}</p>
-            <div class="value">${ins.totalHoras}h</div>
-        `;
-        instructorCardsEl.appendChild(card);
+    // Preparar dados para o Gráfico
+    const labels = instructors.map(ins => ins.nome);
+    const dataValues = instructors.map(ins => parseFloat(ins.totalHoras));
+    
+    const canvas = document.getElementById('hoursChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Se o gráfico já existe, destrói para criar um novo (evita sobreposição)
+    if (hoursChart) {
+        hoursChart.destroy();
+    }
+    
+    hoursChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total de Horas Voadas',
+                data: dataValues,
+                backgroundColor: '#5BAEE2',
+                borderColor: '#1D2951',
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Horas'
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw + ' horas';
+                        }
+                    }
+                }
+            }
+        }
     });
 
     // Renderizar Tabela
@@ -145,9 +193,6 @@ async function sendData(action, data) {
     }
 
     try {
-        // Para POST no Apps Script, usamos fetch com modo 'no-cors' ou 
-        // mandamos os dados via URL parameters se for pequeno.
-        // Mas o padrão correto é POST com JSON stringified.
         const response = await fetch(WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
