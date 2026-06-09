@@ -3,7 +3,7 @@
  */
 
 // CONFIGURAÇÃO: Insira aqui a URL gerada após a implantação do Google Apps Script
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxVV55rey6fTfE3P88qJU0s6Lonresgfu8ibN8Rx6NwCT5xvw0Bo6T9X_5lf5RNuNLHlg/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwQknV9JC0iOxacxFbdQ570S2npbvaiUKAfcBVY04Hm1gJjP4LHsNzdtNb-zi-W058Pmg/exec';
 
 // Estado da Aplicação
 let instructors = [];
@@ -126,7 +126,8 @@ document.getElementById('form-instrutor').addEventListener('submit', async (e) =
     e.preventDefault();
     const data = {
         nome: document.getElementById('nome').value,
-        tipo: document.getElementById('tipo').value
+        tipo: document.getElementById('tipo').value,
+        saldoInicial: document.getElementById('saldo-inicial').value || 0
     };
 
     const result = await sendData('add_instructor', data);

@@ -165,13 +165,33 @@ function handleGetData() {
 }
 
 /**
- * Cadastra um novo instrutor
+ * Cadastra um novo instrutor e registra o saldo inicial de horas
  */
 function handleAddInstructor(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName('Instrutores');
-    sheet.appendRow([data.nome, data.tipo]);
+    const instSheet = ss.getSheetByName('Instrutores');
+    const hoursSheet = ss.getSheetByName('Horas');
+    
+    // 1. Salvar na aba Instrutores
+    instSheet.appendRow([data.nome, data.tipo]);
+    
+    // 2. Se houver saldo inicial, salvar na aba Horas como registro de sistema
+    if (data.saldoInicial && Number(data.saldoInicial) > 0) {
+      const saldo = Number(data.saldoInicial).toFixed(1);
+      // Instrutor | Data | Horas | CavokId
+      hoursSheet.appendRow([
+        data.nome, 
+        "SALDO INICIAL", 
+        saldo, 
+        "SISTEMA"
+      ]);
+      
+      // Formatar célula como número
+      const row = hoursSheet.getLastRow();
+      hoursSheet.getRange(row, 3).setNumberFormat('0.0');
+    }
+    
     return createJsonResponse({status: 'success'});
   } catch (error) {
     return createJsonResponse({status: 'error', message: error.toString()});
