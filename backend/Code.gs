@@ -99,7 +99,7 @@ function handleSyncCavok(date) {
       
       if (!existingIds.includes(flightIdStr)) {
         // Converte minutos para horas decimais com 1 casa decimal
-        const horasDec = (flight["Tempo total de voo"] / 60).toFixed(1);
+        const horasDec = parseFloat((flight["Tempo total de voo"] / 60).toFixed(1));
 
         // Instrutor | Data | Horas | CavokId
         hoursSheet.appendRow([
@@ -108,6 +108,11 @@ function handleSyncCavok(date) {
           horasDec, 
           flightIdStr
         ]);
+        
+        // Forçar a formatação da célula de horas como número para evitar que vire data
+        const row = hoursSheet.getLastRow();
+        hoursSheet.getRange(row, 3).setNumberFormat('0.0');
+        
         addedCount++;
         console.log("Adicionado voo ID: " + flightIdStr + " (" + horasDec + "h)");
       }
