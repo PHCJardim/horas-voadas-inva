@@ -56,21 +56,9 @@ function doPost(e) {
  */
 function handleSyncCavok(date) {
   try {
-    let syncDate = date;
-    
-    // Se não houver data passada (chamada por Acionador Automático ou teste manual sem params)
-    if (!syncDate || syncDate === "undefined") {
-      const now = new Date();
-      // Se rodar entre 00:00 e 01:00, busca o dia anterior
-      if (now.getHours() === 0) {
-        now.setDate(now.getDate() - 1);
-      }
-      syncDate = Utilities.formatDate(now, "GMT-3", "yyyy-MM-dd");
-      console.log("Chamada automática detectada. Usando data: " + syncDate);
-    }
-    
+    const syncDate = date || Utilities.formatDate(new Date(), "GMT-3", "yyyy-MM-dd");
     console.log("--- Iniciando Sincronização CAVOK ---");
-    console.log("Data alvo final: " + syncDate);
+    console.log("Data alvo: " + syncDate);
     
     const url = `${CAVOK_API_URL}?data=${syncDate}`;
     const options = {
