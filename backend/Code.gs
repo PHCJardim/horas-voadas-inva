@@ -56,7 +56,18 @@ function doPost(e) {
  */
 function handleSyncCavok(date) {
   try {
-    const syncDate = date || Utilities.formatDate(new Date(), "GMT-3", "yyyy-MM-dd");
+    let syncDate = date;
+    
+    // Se não houver data (chamada por Acionador Automático)
+    if (!syncDate) {
+      const now = new Date();
+      // Se rodar entre 00:00 e 01:00, busca o dia anterior
+      if (now.getHours() === 0) {
+        now.setDate(now.getDate() - 1);
+      }
+      syncDate = Utilities.formatDate(now, "GMT-3", "yyyy-MM-dd");
+    }
+    
     console.log("--- Iniciando Sincronização CAVOK ---");
     console.log("Data alvo: " + syncDate);
     
@@ -87,6 +98,9 @@ function handleSyncCavok(date) {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const hoursSheet = ss.getSheetByName('Horas');
     
+    // Lista de aeronaves a serem ignoradas
+    const excludedAircraft = ["PC-SJK", "PC-CPQ", "SM-SJK", "SM-CPQ"];
+    
     // Obter IDs existentes para evitar duplicados (Coluna D)
     const lastRow = hoursSheet.getLastRow();
     const existingIds = lastRow > 1 
@@ -96,8 +110,10 @@ function handleSyncCavok(date) {
     let addedCount = 0;
     flights.forEach(flight => {
       const flightIdStr = flight.Id.toString();
+      const aircraft = flight.Aeronave;
       
-      if (!existingIds.includes(flightIdStr)) {
+      // Validar se não é duplicado e se a aeronave não está na lista de exclusão
+      if (!existingIds.includes(flightIdStr) && !excludedAircraft.includes(aircraft)) {
         // Converte minutos para horas decimais com 1 casa decimal
         const horasDec = parseFloat((flight["Tempo total de voo"] / 60).toFixed(1));
 
@@ -114,7 +130,9 @@ function handleSyncCavok(date) {
         hoursSheet.getRange(row, 3).setNumberFormat('0.0');
         
         addedCount++;
-        console.log("Adicionado voo ID: " + flightIdStr + " (" + horasDec + "h)");
+        console.log("Adicionado voo ID: " + flightIdStr + " (" + horasDec + "h) - Aero: " + aircraft);
+      } else if (excludedAircraft.includes(aircraft)) {
+        console.log("Ignorado voo ID: " + flightIdStr + " - Aeronave excluída: " + aircraft);
       }
     });
 

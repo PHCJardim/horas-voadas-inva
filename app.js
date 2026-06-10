@@ -3,7 +3,7 @@
  */
 
 // CONFIGURAÇÃO: Insira aqui a URL gerada após a implantação do Google Apps Script
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyUC-LZgPNZ5RFJL8IHwpJLKPePxtp4UJJM0UIDKKpHVDPpLTjRhY2E3TsbgwHGXZJ0_w/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwinFw5WrY83za_frho9oLQTK-ThmQuS1Nr0kag5MjVc0597Ofm6ack9f71j5dSPRyiAQ/exec';
 
 // Estado da Aplicação
 let instructors = [];
